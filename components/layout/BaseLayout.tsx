@@ -1,9 +1,9 @@
 import React from "react";
 import { Navbar } from "..";
 
-interface Props {
+type Props = {
   children: React.ReactElement;
-}
+};
 
 const BaseLayout: React.FC<Props> = ({ children }) => {
   return (
