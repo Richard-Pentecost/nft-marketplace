@@ -2,7 +2,7 @@ import React from "react";
 import { Navbar } from "..";
 
 type Props = {
-  children: React.ReactElement;
+  children: React.ReactElement | string;
 };
 
 const BaseLayout: React.FC<Props> = ({ children }) => {
