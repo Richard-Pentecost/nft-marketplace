@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { ActiveLink } from "..";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 const navigation = [
   { name: "Marketplace", href: "/", current: true },
@@ -15,6 +15,13 @@ function classNames(...classes: any[]) {
 }
 
 export default function Navbar() {
+  const { pathname } = useRouter();
+  useEffect(() => {
+    navigation.map((nav) =>
+      nav.href === pathname ? (nav.current = true) : (nav.current = false)
+    );
+  }, [pathname]);
+
   return (
     <Disclosure as="nav" className="bg-gray-800">
       {({ open }) => (
@@ -44,15 +51,18 @@ export default function Navbar() {
                 <div className="hidden sm:ml-6 sm:block">
                   <div className="flex space-x-4">
                     {navigation.map((item) => (
-                      <ActiveLink
+                      <Link
                         key={item.name}
                         href={item.href}
-                        activeclass="bg-gray-900"
-                        styles="hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                        className={`hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium  ${
+                          item.current
+                            ? "text-indigo-400 bg-gray-900"
+                            : "text-gray-100"
+                        }`}
                         aria-current={item.current ? "page" : undefined}
                       >
                         {item.name}
-                      </ActiveLink>
+                      </Link>
                     ))}
                   </div>
                 </div>
