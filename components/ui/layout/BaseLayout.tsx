@@ -1,7 +1,7 @@
 import { Navbar } from "..";
 
 type Props = {
-  children: React.ReactElement | string;
+  children: React.ReactNode;
 };
 
 const BaseLayout: React.FC<Props> = ({ children }) => {
