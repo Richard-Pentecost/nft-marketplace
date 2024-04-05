@@ -4,6 +4,7 @@ import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useAccount } from "@/components/hooks/web3";
 
 const navigation = [
   { name: "Marketplace", href: "/", current: true },
@@ -14,8 +15,12 @@ function classNames(...classes: any[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function Navbar() {
+const Navbar: React.FC = () => {
   const { pathname } = useRouter();
+  const { account } = useAccount();
+
+  console.log(account.data);
+
   useEffect(() => {
     navigation.map((nav) =>
       nav.href === pathname ? (nav.current = true) : (nav.current = false)
@@ -144,4 +149,6 @@ export default function Navbar() {
       )}
     </Disclosure>
   );
-}
+};
+
+export default Navbar;
