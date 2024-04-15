@@ -19,15 +19,16 @@ export const hookFactory: AccountHookFactory =
       provider ? "web3/useAccount" : null,
       async () => {
         const accounts = await provider!.listAccounts();
-        const account = accounts[0].address;
+        const account = accounts[0];
 
         if (!account) {
           throw "Cannot retrieve account! Please, connect to web3 wallet.";
         }
-        return account;
+        return account.address;
       },
       {
         revalidateOnFocus: false,
+        shouldRetryOnError: false,
       }
     );
 
@@ -59,7 +60,7 @@ export const hookFactory: AccountHookFactory =
       ...swr,
       data,
       isValidating,
-      isLoading: isLoading || isValidating,
+      isLoading: isLoading as boolean,
       isInstalled: ethereum?.isMetaMask || false,
       mutate,
       connect,
