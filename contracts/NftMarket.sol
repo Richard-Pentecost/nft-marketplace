@@ -20,6 +20,13 @@ contract NftMarket is ERC721URIStorage {
   mapping(string => bool) private _usedTokenURIs;
   mapping(uint => NftItem) private _idToNftItem;
 
+  mapping(address => mapping(uint => uint)) private _ownedTokens;
+  mapping(uint => uint) private _idToOwnedIndex;
+
+  // all token ids in the array
+  uint256[] private _allNfts;
+  mapping(uint => uint) private _idToNftIndex;
+
   event NftItemCreated (
     uint tokenId,
     uint price,
@@ -39,6 +46,55 @@ contract NftMarket is ERC721URIStorage {
 
   function tokenURIExists(string memory tokenURI) public view returns (bool) {
     return _usedTokenURIs[tokenURI] == true;
+  }
+
+  function totalSupply() public view returns (uint) {
+    return _allNfts.length;
+  }
+
+  function listNftIds() public view returns (uint[] memory) {
+    return _allNfts;
+  }
+
+  function tokenByIndex(uint index) public view returns (uint) {
+    require(index < totalSupply(), 'Index out of bounds');
+    return _allNfts[index];
+  }
+
+  function tokenOfOwnerByIndex(address owner, uint index) public view returns (uint) {
+    require(index < ERC721.balanceOf(owner), 'Index out of bounds');
+    return _ownedTokens[owner][index];
+  }
+
+  function getAllNftsOnSale() public view returns (NftItem[] memory) {
+    uint allItemsCount = totalSupply();
+    uint currentIndex = 0;
+    NftItem[] memory items = new NftItem[](_listedItems);
+
+    for (uint i = 0; i < allItemsCount; i++) {
+      uint tokenId = tokenByIndex(i);
+      NftItem storage item = _idToNftItem[tokenId];
+
+      if (item.isListed) {
+        items[currentIndex] = item;
+        currentIndex += 1;
+      }
+    }
+
+    return items;
+  }
+
+  function getOwnedNfts() public view returns (NftItem[] memory) {
+    uint ownedItemsCount = ERC721.balanceOf(msg.sender);
+    NftItem[] memory items = new NftItem[](ownedItemsCount);
+
+    for (uint i = 0; i < ownedItemsCount; i++) {
+      uint tokenId = tokenOfOwnerByIndex(msg.sender, i);
+      NftItem storage item = _idToNftItem[tokenId];
+      items[i] = item;
+    }
+
+    return items;
   }
 
   function mintToken(string memory tokenURI, uint price) public payable returns(uint) {
@@ -78,5 +134,46 @@ contract NftMarket is ERC721URIStorage {
     _idToNftItem[tokenId] = NftItem(tokenId, price, msg.sender, true);
 
     emit NftItemCreated(tokenId, price, msg.sender, true);
+  }
+
+  function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual override {
+    super._beforeTokenTransfer(from, to, tokenId);
+    // minting token
+    if (from == address(0)) {
+      _addTokenToAllTokensEnumeration(tokenId);
+    } else if (from != to) {
+      _removeTokenFromOwnerEnumeration(from, tokenId);
+    }
+
+    if (to != from) {
+      _addTokenToOwnerEnumeration(to, tokenId);
+    }
+  }
+
+  function _addTokenToAllTokensEnumeration(uint tokenId) private {
+    _idToNftIndex[tokenId] = _allNfts.length;
+    _allNfts.push(tokenId);
+  }
+
+  function _addTokenToOwnerEnumeration(address to, uint tokenId) private {
+    uint length = ERC721.balanceOf(to);
+
+    _ownedTokens[to][length] = tokenId;
+    _idToOwnedIndex[tokenId] = length;
+  }
+
+  function _removeTokenFromOwnerEnumeration(address from, uint tokenId) private {
+    uint lastTokenIndex = ERC721.balanceOf(from) - 1;
+    uint tokenIndex = _idToOwnedIndex[tokenId];
+
+    if (tokenIndex != lastTokenIndex) {
+      uint lastTokenId = _ownedTokens[from][lastTokenIndex];
+
+      _ownedTokens[from][tokenIndex] = lastTokenId;
+      _idToOwnedIndex[lastTokenId] = tokenIndex;
+    }
+
+    delete _idToOwnedIndex[tokenId];
+    delete _ownedTokens[from][lastTokenIndex];
   }
 }

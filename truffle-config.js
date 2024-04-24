@@ -15,4 +15,8 @@ module.exports = {
       },
     },
   },
+  solidityLog: {
+    displayPrefix: " :", // defaults to ""
+    preventConsoleLogMigration: true, // defaults to false
+  },
 };
