@@ -4,24 +4,23 @@ import { ethers } from "ethers";
 import { useCallback } from "react";
 import useSWR from "swr";
 
-type UseListedNftsResponse = {
-  buyNft: (tokenId: number, value: number) => Promise<void>;
+type UseOwnedNftsResponse = {
+  listNft: (tokenId: number, price: number) => Promise<void>;
 };
-type ListedNftsHookFactory = CryptoHookFactory<Nft[], UseListedNftsResponse>;
+type OwnedNftsHookFactory = CryptoHookFactory<Nft[], UseOwnedNftsResponse>;
 
-export type UseListedNftsHook = ReturnType<ListedNftsHookFactory>;
+export type UseOwnedNftsHook = ReturnType<OwnedNftsHookFactory>;
 
-export const hookFactory: ListedNftsHookFactory =
+export const hookFactory: OwnedNftsHookFactory =
   ({ contract }) =>
   () => {
     const { data, ...swr } = useSWR(
-      contract ? "web3/useListedNfts" : null,
+      contract ? "web3/useOwnedNfts" : null,
       async () => {
         const nfts = [] as Nft[];
-        const coreNfts = await contract!.getAllNftsOnSale();
+        const coreNfts = await contract!.getOwnedNfts();
 
-        for (let i = 0; i < coreNfts.length; i++) {
-          const item = coreNfts[i];
+        for (const item of coreNfts) {
           const tokenURI = await contract!.tokenURI(item.tokenId);
           const metaRes = await fetch(tokenURI);
           const meta = await metaRes.json();
@@ -39,14 +38,18 @@ export const hookFactory: ListedNftsHookFactory =
     );
 
     const _contract = contract;
-    const buyNft = useCallback(
-      async (tokenId: number, value: number) => {
+    const listNft = useCallback(
+      async (tokenId: number, price: number) => {
         try {
-          await _contract!.buyNft(tokenId, {
-            value: ethers.parseEther(value.toString()),
-          });
+          await _contract!.placeNftOnSale(
+            tokenId,
+            ethers.parseEther(price.toString()),
+            {
+              value: ethers.parseEther("0.025"),
+            }
+          );
 
-          alert("You have bought Nft. See profile page");
+          alert("Item has been listed!");
         } catch (e: any) {
           console.error(e.message);
         }
@@ -56,7 +59,7 @@ export const hookFactory: ListedNftsHookFactory =
 
     return {
       ...swr,
-      buyNft,
+      listNft,
       data: data || [],
     };
   };
